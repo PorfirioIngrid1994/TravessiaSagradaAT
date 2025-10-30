@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Travessia Sagrada</title>
+  <?!= include('sheetstyle'); ?>
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="header">
+      <img class="logo" src="https://i.imgur.com/AXGK8U3.png" alt="Travessia Sagrada" />
+      <div class="titles">
+        <h1>Travessia Sagrada</h1>
+        <p class="subtitle">Plano de leitura do Antigo Testamento</p>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="stat">
+        <div class="stat-number" id="statPct">0%</div>
+        <div class="stat-label">Progresso</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number"><span id="statLidos">0</span>/<span id="statTotal">0</span></div>
+        <div class="stat-label">Capítulos lidos</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="statFaltam">0</div>
+        <div class="stat-label">Faltam</div>
+      </div>
+
+      <div class="sheet-hint" id="sheetHint" title="Aba detectada"></div>
+    </section>
+
+    <section class="filters">
+      <div class="filter-group">
+        <label for="bookSel">Livro</label>
+        <select id="bookSel"></select>
+      </div>
+      <div class="filter-group">
+        <label for="searchInp">Buscar capítulo</label>
+        <input id="searchInp" type="text" placeholder="Ex.: 23" />
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="btnAtlas">Abrir guia do Atlas</button>
+    </section>
+
+    <section class="table-area">
+      <table id="planTable">
+        <thead>
+          <tr>
+            <th style="width:40%">Livro</th>
+            <th style="width:20%">Cap.</th>
+            <th style="width:20%">Lido</th>
+            <th style="width:20%">Data</th>
+          </tr>
+        </thead>
+        <tbody id="planBody"></tbody>
+      </table>
+    </section>
+
+    <footer class="footer">
+      <small>"O preguiçoso deixa de assar a sua caça, mas ser diligente é o precioso bem do homem." Provérbios 12:27</small>
+    </footer>
+
+  </div>
+
+  <!-- MODAL ATLAS -->
+  <div class="modal" id="atlasModal" hidden>
+    <div class="modal-backdrop" id="atlasBackdrop"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Guia do Atlas</h3>
+        <button class="btn ghost" id="closeAtlas">Fechar</button>
+      </div>
+      <div class="modal-filters">
+        <div class="filter-group">
+          <label for="atlasBookSel">Livro</label>
+          <select id="atlasBookSel"></select>
+        </div>
+        <div class="filter-group">
+          <label for="atlasSearch">Buscar</label>
+          <input id="atlasSearch" type="text" placeholder="Capítulo, palavra..." />
+        </div>
+        <div class="modal-hint" id="atlasHint"></div>
+      </div>
+      <div class="table-area">
+        <table>
+          <thead>
+            <tr>
+              <th>Livro</th>
+              <th>Capítulo(s)</th>
+              <th>Seção do Atlas</th>
+            </tr>
+          </thead>
+          <tbody id="atlasBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <?!= include('javascript'); ?>
+</body>
+</html>
