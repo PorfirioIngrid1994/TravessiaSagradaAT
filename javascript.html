@@ -1,0 +1,147 @@
+<script>
+const $ = sel => document.querySelector(sel);
+
+// Plano
+let PLAN = { rows:[], books:[], stats:{}, sheetName:'' };
+
+// Atlas
+let ATLAS = null; // { rows:[{livro,capitulos,atlas}], books:[], sheetName:'' }
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Plano
+  loadPlan();
+  $('#bookSel').addEventListener('change', renderTable);
+  $('#searchInp').addEventListener('input', renderTable);
+
+  // Atlas
+  $('#btnAtlas').addEventListener('click', openAtlas);
+  $('#closeAtlas').addEventListener('click', closeAtlas);
+  $('#atlasBackdrop').addEventListener('click', closeAtlas);
+});
+
+function loadPlan(){
+  google.script.run
+    .withSuccessHandler(data => {
+      PLAN = data || {rows:[],books:[],stats:{},sheetName:''};
+      hydrateStats();
+      populateBooks();
+      renderTable();
+      if (PLAN.sheetName) {
+        $('#sheetHint').textContent = 'Aba detectada: ' + PLAN.sheetName + '  •  (você pode fixar outra usando setSheetName("Nome"))';
+      }
+    })
+    .withFailureHandler(err => alert(err.message))
+    .getPlan();
+}
+
+function hydrateStats(){
+  $('#statTotal').textContent = PLAN.stats.total ?? 0;
+  $('#statLidos').textContent = PLAN.stats.lidos ?? 0;
+  $('#statFaltam').textContent = PLAN.stats.faltam ?? 0;
+  $('#statPct').textContent = (PLAN.stats.pct ?? 0) + '%';
+}
+
+function populateBooks(){
+  const sel = $('#bookSel');
+  sel.innerHTML = '<option value="">Todos os livros</option>' +
+    (PLAN.books||[]).map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
+}
+
+function renderTable(){
+  const livro = $('#bookSel').value;
+  const q = ($('#searchInp').value || '').trim();
+
+  let rows = (PLAN.rows||[]).slice();
+  if (livro) rows = rows.filter(r => r.livro === livro);
+  if (q) rows = rows.filter(r => String(r.capitulo).includes(q));
+
+  const tbody = document.getElementById('planBody');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${escapeHtml(r.livro)}</td>
+      <td><span class="badge ${r.lido ? '' : 'off'}">${r.capitulo}</span></td>
+      <td><button class="btn" onclick="toggle(${r.i})">${r.lido ? 'Desmarcar' : 'Marcar'}</button></td>
+      <td>${r.data ? escapeHtml(r.data) : ''}</td>
+    </tr>
+  `).join('');
+}
+
+function toggle(rowIndex){
+  google.script.run
+    .withSuccessHandler(newPlan => {
+      PLAN = newPlan;
+      hydrateStats();
+      populateBooks();
+      renderTable();
+    })
+    .withFailureHandler(e => alert(e.message))
+    .toggleChapter(rowIndex);
+}
+
+/* ===== Atlas modal ===== */
+function openAtlas(){
+  const modal = $('#atlasModal');
+  modal.hidden = false;
+
+  if (!ATLAS) {
+    $('#atlasBody').innerHTML = `<tr><td colspan="3">Carregando guia do Atlas...</td></tr>`;
+    google.script.run
+      .withSuccessHandler(data => {
+        ATLAS = data;
+        hydrateAtlas();
+      })
+      .withFailureHandler(e => {
+        $('#atlasBody').innerHTML = `<tr><td colspan="3">${escapeHtml(e.message)}</td></tr>`;
+      })
+      .getAtlasMap();
+  } else {
+    hydrateAtlas();
+  }
+}
+
+function closeAtlas(){
+  $('#atlasModal').hidden = true;
+}
+
+function hydrateAtlas(){
+  if (!ATLAS) return;
+  // hint
+  $('#atlasHint').textContent = `Aba detectada: ${ATLAS.sheetName}`;
+
+  // livros
+  const sel = $('#atlasBookSel');
+  if (!sel.dataset.ready) {
+    sel.innerHTML = '<option value="">Todos os livros</option>' +
+      (ATLAS.books||[]).map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
+    sel.addEventListener('change', renderAtlasTable);
+    $('#atlasSearch').addEventListener('input', renderAtlasTable);
+    sel.dataset.ready = '1';
+  }
+  renderAtlasTable();
+}
+
+function renderAtlasTable(){
+  const selBook = $('#atlasBookSel').value;
+  const q = ($('#atlasSearch').value || '').toLowerCase();
+
+  let rows = (ATLAS.rows||[]).slice();
+  if (selBook) rows = rows.filter(r => r.livro === selBook);
+  if (q) rows = rows.filter(r =>
+    r.livro.toLowerCase().includes(q) ||
+    String(r.capitulos).toLowerCase().includes(q) ||
+    String(r.atlas).toLowerCase().includes(q)
+  );
+
+  const tbody = $('#atlasBody');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${escapeHtml(r.livro)}</td>
+      <td>${escapeHtml(r.capitulos)}</td>
+      <td>${escapeHtml(r.atlas)}</td>
+    </tr>
+  `).join('') || `<tr><td colspan="3">Nenhum item encontrado.</td></tr>`;
+}
+
+/* ===== Helpers ===== */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+</script>
